@@ -21,9 +21,11 @@ export default {
     }
 
     // --- 地區驗證 ---
-    const country = request.cf ? request.cf.country : null;
-    if (country && !ALLOWED_COUNTRIES.includes(country)) {
-      return new Response(`Access Denied`, { status: 403 });
+    if (ALLOWED_COUNTRIES !== null) {  // ✅ 只有在 ALLOWED_COUNTRIES 不是 null 時才檢查
+      const country = request.cf ? request.cf.country : null;
+      if (country && !ALLOWED_COUNTRIES.includes(country)) {
+        return new Response(`Access Denied`, { status: 403 });
+      }
     }
 
     // --- 路由處理 ---
