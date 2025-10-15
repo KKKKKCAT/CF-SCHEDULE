@@ -1141,7 +1141,6 @@ function getHtmlTemplate(basePath) {
         const lines = content.split('\\n');
         const groups = {};
         const others = [];
-        let currentGroup = null;
         
         lines.forEach(line => {
           const trimmedLine = line.trim();
@@ -1151,31 +1150,25 @@ function getHtmlTemplate(basePath) {
             return;
           }
           
-          // 檢查是否為現有的分組標題
-          const groupTitleMatch = trimmedLine.match(/^--\\s*(.+?)\\s*--$/);
-          if (groupTitleMatch) {
-            currentGroup = groupTitleMatch[1]; // 提取分組名稱
-            return;
+          // ✅ 跳過註解行（但不設置 currentGroup）
+          if (trimmedLine.match(/^--\\s*.+?\\s*--$/)) {
+            return; // 直接跳過，不處理
           }
           
           // 處理數據行
           if (trimmedLine.includes('|')) {
             const parts = trimmedLine.split('|').map(part => part.trim());
             if (parts.length >= 3) {
-              const caseName = parts[2]; // 個案名稱
+              const caseName = parts[2]; // ✅ 只使用第三欄位作為個案名稱
               
-              // 如果當前在某個分組中，使用分組名稱，否則使用個案名稱
-              const groupKey = currentGroup || caseName;
-              
-              if (!groups[groupKey]) {
-                groups[groupKey] = [];
+              if (!groups[caseName]) {
+                groups[caseName] = [];
               }
-              groups[groupKey].push(trimmedLine);
+              groups[caseName].push(trimmedLine);
             }
           } else {
             // 非數據行，放入其他內容
             others.push(trimmedLine);
-            currentGroup = null; // 重置當前分組
           }
         });
         
@@ -1195,7 +1188,6 @@ function getHtmlTemplate(basePath) {
         const groupEarliestDates = {};
         Object.keys(groups).forEach(groupName => {
           const dates = groups[groupName].map(line => extractDateFromLine(line));
-          // 找出最早的日期
           groupEarliestDates[groupName] = new Date(Math.min(...dates));
         });
         
@@ -1215,10 +1207,8 @@ function getHtmlTemplate(basePath) {
         });
         
         sortedGroupNames.forEach((groupName, index) => {
-          // 只有在有多個項目時才添加分組標題
-          if (groups[groupName].length > 1 || sortedGroupNames.length > 1) {
-            result.push(\`-- \${groupName} --\`);
-          }
+          // ✅ 總是添加分組標題
+          result.push(\`-- \${groupName} --\`);
           
           // 按日期排序同一個案的項目
           const sortedEvents = groups[groupName].sort((a, b) => {
